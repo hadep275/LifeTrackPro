@@ -15,6 +15,30 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // User routes
+  app.get("/api/users/default", async (req, res) => {
+    try {
+      // Check if default user exists
+      let user = await storage.getUserByUsername("default");
+      
+      // If not, create it
+      if (!user) {
+        user = await storage.createUser({
+          username: "default",
+          password: "password123", // This is just a demo user
+          email: "default@example.com",
+          theme: "system"
+        });
+        console.log("Created default user with ID:", user.id);
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching/creating default user:", error);
+      res.status(500).json({ message: "Failed to fetch/create default user" });
+    }
+  });
+
   // Tasks routes
   app.get("/api/tasks", async (req, res) => {
     try {

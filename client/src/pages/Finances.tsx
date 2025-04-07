@@ -290,9 +290,9 @@ const Finances = () => {
   });
 
   const createFinancesMutation = useMutation({
-    mutationFn: async (data: InsertFinances) => {
+    mutationFn: async (data: any) => {
       console.log("DEBUG: Sending finances data:", JSON.stringify(data));
-      return await apiRequest<Finances>('/api/finances', {
+      return await apiRequest<FinancesType>('/api/finances', {
         method: 'POST',
         body: JSON.stringify(data)
       });
@@ -498,15 +498,33 @@ const Finances = () => {
     }
   });
 
-  // If no finances found, create a default one
+  // Default user query
+  const fetchDefaultUserMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest<any>("/api/users/default", {
+        method: "GET",
+      });
+    }
+  });
+
+  // If no finances found, create a default one with the default user
   const handleCreateInitialFinances = () => {
-    console.log("Creating initial finances with userId:", userId);
-    createFinancesMutation.mutate({
-      userId: userId,
-      income: "0",
-      expenses: "0", 
-      savings: "0",
-      netWorth: "0"
+    // First get or create the default user
+    fetchDefaultUserMutation.mutate(undefined, {
+      onSuccess: (user) => {
+        console.log("Using default user with ID:", user.id);
+        // Then create finances with the user ID
+        createFinancesMutation.mutate({
+          userId: user.id,
+          income: "0",
+          expenses: "0", 
+          savings: "0",
+          netWorth: "0"
+        });
+      },
+      onError: (error) => {
+        console.error("Failed to get default user:", error);
+      }
     });
   };
 
