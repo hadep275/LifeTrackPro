@@ -4,8 +4,11 @@ import {
   Habit, InsertHabit,
   Goal, InsertGoal,
   Finances, InsertFinances,
-  ExpenseCategory, InsertExpenseCategory
+  ExpenseCategory, InsertExpenseCategory,
+  users, tasks, habits, goals, finances, expenseCategories
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -47,279 +50,269 @@ export interface IStorage {
   deleteExpenseCategory(id: number): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private tasks: Map<number, Task>;
-  private habits: Map<number, Habit>;
-  private goals: Map<number, Goal>;
-  private financesMap: Map<number, Finances>;
-  private expenseCategories: Map<number, ExpenseCategory>;
-  
-  private userCurrentId: number;
-  private taskCurrentId: number;
-  private habitCurrentId: number;
-  private goalCurrentId: number;
-  private financesCurrentId: number;
-  private expenseCategoryCurrentId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.tasks = new Map();
-    this.habits = new Map();
-    this.goals = new Map();
-    this.financesMap = new Map();
-    this.expenseCategories = new Map();
-    
-    this.userCurrentId = 1;
-    this.taskCurrentId = 1;
-    this.habitCurrentId = 1;
-    this.goalCurrentId = 1;
-    this.financesCurrentId = 1;
-    this.expenseCategoryCurrentId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userCurrentId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
   
   // Task methods
   async getTasks(userId: number): Promise<Task[]> {
-    return Array.from(this.tasks.values()).filter(task => task.userId === userId);
+    return await db.select().from(tasks).where(eq(tasks.userId, userId));
   }
   
   async getTask(id: number): Promise<Task | undefined> {
-    return this.tasks.get(id);
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, id));
+    return task;
   }
   
   async createTask(insertTask: InsertTask): Promise<Task> {
-    const id = this.taskCurrentId++;
-    const task: Task = { ...insertTask, id };
-    this.tasks.set(id, task);
+    const [task] = await db.insert(tasks).values(insertTask).returning();
     return task;
   }
   
   async updateTask(id: number, insertTask: InsertTask): Promise<Task | undefined> {
-    const existingTask = this.tasks.get(id);
-    if (!existingTask) {
-      return undefined;
-    }
-    
-    const updatedTask: Task = { ...insertTask, id };
-    this.tasks.set(id, updatedTask);
+    const [updatedTask] = await db
+      .update(tasks)
+      .set(insertTask)
+      .where(eq(tasks.id, id))
+      .returning();
     return updatedTask;
   }
   
   async deleteTask(id: number): Promise<void> {
-    this.tasks.delete(id);
+    await db.delete(tasks).where(eq(tasks.id, id));
   }
   
   // Habit methods
   async getHabits(userId: number): Promise<Habit[]> {
-    return Array.from(this.habits.values()).filter(habit => habit.userId === userId);
+    return await db.select().from(habits).where(eq(habits.userId, userId));
   }
   
   async getHabit(id: number): Promise<Habit | undefined> {
-    return this.habits.get(id);
+    const [habit] = await db.select().from(habits).where(eq(habits.id, id));
+    return habit;
   }
   
   async createHabit(insertHabit: InsertHabit): Promise<Habit> {
-    const id = this.habitCurrentId++;
-    const habit: Habit = { ...insertHabit, id };
-    this.habits.set(id, habit);
+    const [habit] = await db.insert(habits).values(insertHabit).returning();
     return habit;
   }
   
   async updateHabit(id: number, insertHabit: InsertHabit): Promise<Habit | undefined> {
-    const existingHabit = this.habits.get(id);
-    if (!existingHabit) {
-      return undefined;
-    }
-    
-    const updatedHabit: Habit = { ...insertHabit, id };
-    this.habits.set(id, updatedHabit);
+    const [updatedHabit] = await db
+      .update(habits)
+      .set(insertHabit)
+      .where(eq(habits.id, id))
+      .returning();
     return updatedHabit;
   }
   
   async deleteHabit(id: number): Promise<void> {
-    this.habits.delete(id);
+    await db.delete(habits).where(eq(habits.id, id));
   }
   
   // Goal methods
   async getGoals(userId: number): Promise<Goal[]> {
-    return Array.from(this.goals.values()).filter(goal => goal.userId === userId);
+    return await db.select().from(goals).where(eq(goals.userId, userId));
   }
   
   async getGoal(id: number): Promise<Goal | undefined> {
-    return this.goals.get(id);
+    const [goal] = await db.select().from(goals).where(eq(goals.id, id));
+    return goal;
   }
   
   async createGoal(insertGoal: InsertGoal): Promise<Goal> {
-    const id = this.goalCurrentId++;
-    const goal: Goal = { ...insertGoal, id };
-    this.goals.set(id, goal);
+    const [goal] = await db.insert(goals).values(insertGoal).returning();
     return goal;
   }
   
   async updateGoal(id: number, insertGoal: InsertGoal): Promise<Goal | undefined> {
-    const existingGoal = this.goals.get(id);
-    if (!existingGoal) {
-      return undefined;
-    }
-    
-    const updatedGoal: Goal = { ...insertGoal, id };
-    this.goals.set(id, updatedGoal);
+    const [updatedGoal] = await db
+      .update(goals)
+      .set(insertGoal)
+      .where(eq(goals.id, id))
+      .returning();
     return updatedGoal;
   }
   
   async deleteGoal(id: number): Promise<void> {
-    this.goals.delete(id);
+    await db.delete(goals).where(eq(goals.id, id));
   }
   
   // Finances methods
   async getFinances(userId: number): Promise<Finances | undefined> {
-    const finances = Array.from(this.financesMap.values()).find(f => f.userId === userId);
+    // Get the finances record
+    const [financesRecord] = await db
+      .select()
+      .from(finances)
+      .where(eq(finances.userId, userId));
     
-    if (!finances) {
+    if (!financesRecord) {
       return undefined;
     }
     
     // Get associated expense categories
-    const categories = Array.from(this.expenseCategories.values()).filter(
-      cat => cat.financesId === finances.id
-    );
+    const categories = await db
+      .select()
+      .from(expenseCategories)
+      .where(eq(expenseCategories.financesId, financesRecord.id));
     
     return {
-      ...finances,
+      ...financesRecord,
       expenseCategories: categories
     };
   }
   
   async createFinances(insertFinances: InsertFinances): Promise<Finances> {
-    const id = this.financesCurrentId++;
-    const finances = { ...insertFinances, id, expenseCategories: [] };
-    this.financesMap.set(id, finances);
-    return finances;
+    const [financesRecord] = await db
+      .insert(finances)
+      .values(insertFinances)
+      .returning();
+    
+    return {
+      ...financesRecord,
+      expenseCategories: []
+    };
   }
   
   async updateFinances(id: number, insertFinances: InsertFinances): Promise<Finances | undefined> {
-    const existingFinances = this.financesMap.get(id);
-    if (!existingFinances) {
+    const [updatedFinances] = await db
+      .update(finances)
+      .set(insertFinances)
+      .where(eq(finances.id, id))
+      .returning();
+    
+    if (!updatedFinances) {
       return undefined;
     }
     
-    const categories = Array.from(this.expenseCategories.values()).filter(
-      cat => cat.financesId === id
-    );
+    // Get associated expense categories
+    const categories = await db
+      .select()
+      .from(expenseCategories)
+      .where(eq(expenseCategories.financesId, id));
     
-    const updatedFinances: Finances = { 
-      ...insertFinances, 
-      id,
+    return {
+      ...updatedFinances,
       expenseCategories: categories
     };
-    
-    this.financesMap.set(id, updatedFinances);
-    return updatedFinances;
   }
   
   // Expense Categories methods
   async getExpenseCategories(financesId: number): Promise<ExpenseCategory[]> {
-    return Array.from(this.expenseCategories.values()).filter(
-      category => category.financesId === financesId
-    );
+    return await db
+      .select()
+      .from(expenseCategories)
+      .where(eq(expenseCategories.financesId, financesId));
   }
   
   async getExpenseCategory(id: number): Promise<ExpenseCategory | undefined> {
-    return this.expenseCategories.get(id);
+    const [category] = await db
+      .select()
+      .from(expenseCategories)
+      .where(eq(expenseCategories.id, id));
+    return category;
   }
   
   async createExpenseCategory(insertCategory: InsertExpenseCategory): Promise<ExpenseCategory> {
-    const id = this.expenseCategoryCurrentId++;
-    const category: ExpenseCategory = { ...insertCategory, id };
-    this.expenseCategories.set(id, category);
+    const [category] = await db
+      .insert(expenseCategories)
+      .values(insertCategory)
+      .returning();
     
     // Update the total expenses in the associated finances
-    const finances = this.financesMap.get(category.financesId);
-    if (finances) {
+    const [financesRecord] = await db
+      .select()
+      .from(finances)
+      .where(eq(finances.id, category.financesId));
+    
+    if (financesRecord) {
       const categories = await this.getExpenseCategories(category.financesId);
       const totalExpenses = categories.reduce((sum, cat) => sum + Number(cat.amount), 0);
       
-      const updatedFinances: Finances = {
-        ...finances,
-        expenses: totalExpenses,
-        expenseCategories: categories
-      };
-      
-      this.financesMap.set(finances.id, updatedFinances);
+      await db
+        .update(finances)
+        .set({ expenses: totalExpenses.toString() })
+        .where(eq(finances.id, financesRecord.id));
     }
     
     return category;
   }
   
   async updateExpenseCategory(id: number, insertCategory: InsertExpenseCategory): Promise<ExpenseCategory | undefined> {
-    const existingCategory = this.expenseCategories.get(id);
-    if (!existingCategory) {
+    const [updatedCategory] = await db
+      .update(expenseCategories)
+      .set(insertCategory)
+      .where(eq(expenseCategories.id, id))
+      .returning();
+    
+    if (!updatedCategory) {
       return undefined;
     }
     
-    const updatedCategory: ExpenseCategory = { ...insertCategory, id };
-    this.expenseCategories.set(id, updatedCategory);
-    
     // Update the total expenses in the associated finances
-    const finances = this.financesMap.get(updatedCategory.financesId);
-    if (finances) {
+    const [financesRecord] = await db
+      .select()
+      .from(finances)
+      .where(eq(finances.id, updatedCategory.financesId));
+    
+    if (financesRecord) {
       const categories = await this.getExpenseCategories(updatedCategory.financesId);
       const totalExpenses = categories.reduce((sum, cat) => sum + Number(cat.amount), 0);
       
-      const updatedFinances: Finances = {
-        ...finances,
-        expenses: totalExpenses,
-        expenseCategories: categories
-      };
-      
-      this.financesMap.set(finances.id, updatedFinances);
+      await db
+        .update(finances)
+        .set({ expenses: totalExpenses.toString() })
+        .where(eq(finances.id, financesRecord.id));
     }
     
     return updatedCategory;
   }
   
   async deleteExpenseCategory(id: number): Promise<void> {
-    const category = this.expenseCategories.get(id);
+    // Get the category before deleting it
+    const [category] = await db
+      .select()
+      .from(expenseCategories)
+      .where(eq(expenseCategories.id, id));
+    
     if (!category) {
       return;
     }
     
-    const financesId = category.financesId;
-    this.expenseCategories.delete(id);
+    // Delete the category
+    await db.delete(expenseCategories).where(eq(expenseCategories.id, id));
     
     // Update the total expenses in the associated finances
-    const finances = this.financesMap.get(financesId);
-    if (finances) {
+    const financesId = category.financesId;
+    const [financesRecord] = await db
+      .select()
+      .from(finances)
+      .where(eq(finances.id, financesId));
+    
+    if (financesRecord) {
       const categories = await this.getExpenseCategories(financesId);
       const totalExpenses = categories.reduce((sum, cat) => sum + Number(cat.amount), 0);
       
-      const updatedFinances: Finances = {
-        ...finances,
-        expenses: totalExpenses,
-        expenseCategories: categories
-      };
-      
-      this.financesMap.set(finances.id, updatedFinances);
+      await db
+        .update(finances)
+        .set({ expenses: totalExpenses.toString() })
+        .where(eq(finances.id, financesId));
     }
   }
 }
 
-export const storage = new MemStorage();
+// Export an instance of the DatabaseStorage class
+export const storage = new DatabaseStorage();

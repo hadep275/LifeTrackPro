@@ -1,6 +1,14 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle,
+  CardFooter
+} from "@/components/ui/card";
 import { Task } from "@shared/schema";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { CheckCheck } from "lucide-react";
 
 interface TaskSummaryProps {
   tasks: Task[];
@@ -14,58 +22,59 @@ const TaskSummary = ({ tasks, onToggleTask, onViewAll }: TaskSummaryProps) => {
   const getPriorityClass = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-100 text-red-800';
+        return 'bg-destructive/10 text-destructive dark:bg-destructive/20';
       case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-100';
       case 'low':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100';
       default:
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
   return (
-    <Card className="bg-white shadow-sm border border-slate-200">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-lg">Tasks</h3>
-          <button 
-            onClick={onViewAll}
-            className="text-primary-dark text-sm hover:underline"
-          >
-            View All
-          </button>
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <CheckCheck className="h-5 w-5 text-primary" />
+            Tasks
+          </CardTitle>
         </div>
-        <div className="space-y-3">
-          {displayTasks.length > 0 ? (
-            displayTasks.map((task) => (
-              <div key={task.id} className="flex items-center justify-between py-2 border-b border-slate-100">
-                <div className="flex items-center">
-                  <Checkbox 
-                    id={`task-${task.id}`}
-                    checked={task.completed}
-                    onCheckedChange={(checked) => onToggleTask(task.id, checked as boolean)}
-                    className="h-4 w-4 text-primary-dark rounded border-slate-300"
-                  />
-                  <label 
-                    htmlFor={`task-${task.id}`}
-                    className={`ml-2 text-sm font-medium ${task.completed ? 'line-through text-slate-400' : ''}`}
-                  >
-                    {task.title}
-                  </label>
-                </div>
-                <span className={`text-xs px-2 py-1 rounded ${getPriorityClass(task.priority)}`}>
-                  {task.priority}
-                </span>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {displayTasks.length > 0 ? (
+          displayTasks.map((task) => (
+            <div key={task.id} className="flex items-center justify-between py-2 border-b border-border">
+              <div className="flex items-center">
+                <Checkbox 
+                  id={`task-${task.id}`}
+                  checked={task.completed}
+                  onCheckedChange={(checked) => onToggleTask(task.id, checked as boolean)}
+                />
+                <label 
+                  htmlFor={`task-${task.id}`}
+                  className={`ml-2 text-sm font-medium ${task.completed ? 'line-through text-muted-foreground' : ''}`}
+                >
+                  {task.title}
+                </label>
               </div>
-            ))
-          ) : (
-            <div className="text-sm text-slate-500 text-center py-2">
-              No tasks yet. Add some to get started!
+              <span className={`text-xs px-2 py-1 rounded-md ${getPriorityClass(task.priority)}`}>
+                {task.priority}
+              </span>
             </div>
-          )}
-        </div>
+          ))
+        ) : (
+          <div className="text-sm text-muted-foreground text-center py-4">
+            No tasks yet. Add some to get started!
+          </div>
+        )}
       </CardContent>
+      <CardFooter>
+        <Button variant="outline" size="sm" onClick={onViewAll} className="w-full">
+          View All Tasks
+        </Button>
+      </CardFooter>
     </Card>
   );
 };

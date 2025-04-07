@@ -3,6 +3,8 @@ import { lazy, Suspense } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import NotFound from "@/pages/not-found";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { Toaster } from "@/components/ui/toaster";
 
 // Lazy loaded components
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -13,22 +15,25 @@ const Finances = lazy(() => import("@/pages/Finances"));
 
 function App() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-800">
-      <Header />
-      <main className="flex-grow container mx-auto px-4 py-6">
-        <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/tasks" component={Tasks} />
-            <Route path="/habits" component={Habits} />
-            <Route path="/goals" component={Goals} />
-            <Route path="/finances" component={Finances} />
-            <Route component={NotFound} />
-          </Switch>
-        </Suspense>
-      </main>
-      <Footer />
-    </div>
+    <ThemeProvider defaultTheme="system" storageKey="life-track-theme">
+      <div className="min-h-screen flex flex-col bg-background font-sans text-foreground">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-6">
+          <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/tasks" component={Tasks} />
+              <Route path="/habits" component={Habits} />
+              <Route path="/goals" component={Goals} />
+              <Route path="/finances" component={Finances} />
+              <Route component={NotFound} />
+            </Switch>
+          </Suspense>
+        </main>
+        <Footer />
+        <Toaster />
+      </div>
+    </ThemeProvider>
   );
 }
 
