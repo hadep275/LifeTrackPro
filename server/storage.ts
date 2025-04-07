@@ -5,7 +5,12 @@ import {
   Goal, InsertGoal,
   Finances, InsertFinances,
   ExpenseCategory, InsertExpenseCategory,
-  users, tasks, habits, goals, finances, expenseCategories
+  FinancialGoal, InsertFinancialGoal,
+  FinancialAccount, InsertFinancialAccount,
+  Investment, InsertInvestment,
+  FinancialTransaction, InsertTransaction,
+  users, tasks, habits, goals, finances, expenseCategories,
+  financialGoals, financialAccounts, investments, financialTransactions
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -48,6 +53,34 @@ export interface IStorage {
   createExpenseCategory(category: InsertExpenseCategory): Promise<ExpenseCategory>;
   updateExpenseCategory(id: number, category: InsertExpenseCategory): Promise<ExpenseCategory | undefined>;
   deleteExpenseCategory(id: number): Promise<void>;
+  
+  // Financial Goals methods
+  getFinancialGoals(financesId: number): Promise<FinancialGoal[]>;
+  getFinancialGoal(id: number): Promise<FinancialGoal | undefined>;
+  createFinancialGoal(goal: InsertFinancialGoal): Promise<FinancialGoal>;
+  updateFinancialGoal(id: number, goal: InsertFinancialGoal): Promise<FinancialGoal | undefined>;
+  deleteFinancialGoal(id: number): Promise<void>;
+  
+  // Financial Accounts methods
+  getFinancialAccounts(financesId: number): Promise<FinancialAccount[]>;
+  getFinancialAccount(id: number): Promise<FinancialAccount | undefined>;
+  createFinancialAccount(account: InsertFinancialAccount): Promise<FinancialAccount>;
+  updateFinancialAccount(id: number, account: InsertFinancialAccount): Promise<FinancialAccount | undefined>;
+  deleteFinancialAccount(id: number): Promise<void>;
+  
+  // Investments methods
+  getInvestments(financesId: number): Promise<Investment[]>;
+  getInvestment(id: number): Promise<Investment | undefined>;
+  createInvestment(investment: InsertInvestment): Promise<Investment>;
+  updateInvestment(id: number, investment: InsertInvestment): Promise<Investment | undefined>;
+  deleteInvestment(id: number): Promise<void>;
+  
+  // Financial Transactions methods
+  getFinancialTransactions(financesId: number, accountId?: number): Promise<FinancialTransaction[]>;
+  getFinancialTransaction(id: number): Promise<FinancialTransaction | undefined>;
+  createFinancialTransaction(transaction: InsertTransaction): Promise<FinancialTransaction>;
+  updateFinancialTransaction(id: number, transaction: InsertTransaction): Promise<FinancialTransaction | undefined>;
+  deleteFinancialTransaction(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -169,10 +202,43 @@ export class DatabaseStorage implements IStorage {
       .from(expenseCategories)
       .where(eq(expenseCategories.financesId, financesRecord.id));
     
-    return {
+    // Get associated financial goals
+    const goals = await db
+      .select()
+      .from(financialGoals)
+      .where(eq(financialGoals.financesId, financesRecord.id));
+    
+    // Get associated financial accounts
+    const accounts = await db
+      .select()
+      .from(financialAccounts)
+      .where(eq(financialAccounts.financesId, financesRecord.id));
+    
+    // Get associated investments
+    const investmentsList = await db
+      .select()
+      .from(investments)
+      .where(eq(investments.financesId, financesRecord.id));
+    
+    // Get associated transactions
+    const transactions = await db
+      .select()
+      .from(financialTransactions)
+      .where(eq(financialTransactions.financesId, financesRecord.id));
+    
+    // Convert null values to undefined to match the Finances interface
+    const returnData = {
       ...financesRecord,
-      expenseCategories: categories
+      expenseCategories: categories,
+      financialGoals: goals,
+      accounts: accounts,
+      investments: investmentsList,
+      transactions: transactions,
+      retirementAge: financesRecord.retirementAge === null ? undefined : financesRecord.retirementAge,
+      currentAge: financesRecord.currentAge === null ? undefined : financesRecord.currentAge
     };
+    
+    return returnData as Finances;
   }
   
   async createFinances(insertFinances: InsertFinances): Promise<Finances> {
@@ -181,10 +247,19 @@ export class DatabaseStorage implements IStorage {
       .values(insertFinances)
       .returning();
     
-    return {
+    // Convert null values to undefined to match the Finances interface
+    const returnData = {
       ...financesRecord,
-      expenseCategories: []
+      expenseCategories: [],
+      financialGoals: [],
+      accounts: [],
+      investments: [],
+      transactions: [],
+      retirementAge: financesRecord.retirementAge === null ? undefined : financesRecord.retirementAge,
+      currentAge: financesRecord.currentAge === null ? undefined : financesRecord.currentAge
     };
+    
+    return returnData as Finances;
   }
   
   async updateFinances(id: number, insertFinances: InsertFinances): Promise<Finances | undefined> {
@@ -204,10 +279,43 @@ export class DatabaseStorage implements IStorage {
       .from(expenseCategories)
       .where(eq(expenseCategories.financesId, id));
     
-    return {
+    // Get associated financial goals
+    const goals = await db
+      .select()
+      .from(financialGoals)
+      .where(eq(financialGoals.financesId, id));
+    
+    // Get associated financial accounts
+    const accounts = await db
+      .select()
+      .from(financialAccounts)
+      .where(eq(financialAccounts.financesId, id));
+    
+    // Get associated investments
+    const investmentsList = await db
+      .select()
+      .from(investments)
+      .where(eq(investments.financesId, id));
+    
+    // Get associated transactions
+    const transactions = await db
+      .select()
+      .from(financialTransactions)
+      .where(eq(financialTransactions.financesId, id));
+    
+    // Convert null values to undefined to match the Finances interface
+    const returnData = {
       ...updatedFinances,
-      expenseCategories: categories
+      expenseCategories: categories,
+      financialGoals: goals,
+      accounts: accounts,
+      investments: investmentsList,
+      transactions: transactions,
+      retirementAge: updatedFinances.retirementAge === null ? undefined : updatedFinances.retirementAge,
+      currentAge: updatedFinances.currentAge === null ? undefined : updatedFinances.currentAge
     };
+    
+    return returnData as Finances;
   }
   
   // Expense Categories methods
@@ -311,6 +419,356 @@ export class DatabaseStorage implements IStorage {
         .set({ expenses: totalExpenses.toString() })
         .where(eq(finances.id, financesId));
     }
+  }
+  
+  // Financial Goals methods
+  async getFinancialGoals(financesId: number): Promise<FinancialGoal[]> {
+    return await db
+      .select()
+      .from(financialGoals)
+      .where(eq(financialGoals.financesId, financesId));
+  }
+  
+  async getFinancialGoal(id: number): Promise<FinancialGoal | undefined> {
+    const [goal] = await db
+      .select()
+      .from(financialGoals)
+      .where(eq(financialGoals.id, id));
+    return goal;
+  }
+  
+  async createFinancialGoal(insertGoal: InsertFinancialGoal): Promise<FinancialGoal> {
+    const [goal] = await db
+      .insert(financialGoals)
+      .values(insertGoal)
+      .returning();
+    return goal;
+  }
+  
+  async updateFinancialGoal(id: number, insertGoal: InsertFinancialGoal): Promise<FinancialGoal | undefined> {
+    const [updatedGoal] = await db
+      .update(financialGoals)
+      .set(insertGoal)
+      .where(eq(financialGoals.id, id))
+      .returning();
+    return updatedGoal;
+  }
+  
+  async deleteFinancialGoal(id: number): Promise<void> {
+    await db.delete(financialGoals).where(eq(financialGoals.id, id));
+  }
+  
+  // Financial Accounts methods
+  async getFinancialAccounts(financesId: number): Promise<FinancialAccount[]> {
+    return await db
+      .select()
+      .from(financialAccounts)
+      .where(eq(financialAccounts.financesId, financesId));
+  }
+  
+  async getFinancialAccount(id: number): Promise<FinancialAccount | undefined> {
+    const [account] = await db
+      .select()
+      .from(financialAccounts)
+      .where(eq(financialAccounts.id, id));
+    return account;
+  }
+  
+  async createFinancialAccount(insertAccount: InsertFinancialAccount): Promise<FinancialAccount> {
+    const [account] = await db
+      .insert(financialAccounts)
+      .values(insertAccount)
+      .returning();
+      
+    // Update net worth in finances
+    await this.updateNetWorth(account.financesId);
+    
+    return account;
+  }
+  
+  async updateFinancialAccount(id: number, insertAccount: InsertFinancialAccount): Promise<FinancialAccount | undefined> {
+    const [updatedAccount] = await db
+      .update(financialAccounts)
+      .set(insertAccount)
+      .where(eq(financialAccounts.id, id))
+      .returning();
+    
+    if (updatedAccount) {
+      // Update net worth in finances
+      await this.updateNetWorth(updatedAccount.financesId);
+    }
+    
+    return updatedAccount;
+  }
+  
+  async deleteFinancialAccount(id: number): Promise<void> {
+    // Get the account before deleting to know which finances to update
+    const [account] = await db
+      .select()
+      .from(financialAccounts)
+      .where(eq(financialAccounts.id, id));
+    
+    if (account) {
+      await db.delete(financialAccounts).where(eq(financialAccounts.id, id));
+      
+      // Update net worth in finances
+      await this.updateNetWorth(account.financesId);
+    }
+  }
+  
+  // Investments methods
+  async getInvestments(financesId: number): Promise<Investment[]> {
+    return await db
+      .select()
+      .from(investments)
+      .where(eq(investments.financesId, financesId));
+  }
+  
+  async getInvestment(id: number): Promise<Investment | undefined> {
+    const [investment] = await db
+      .select()
+      .from(investments)
+      .where(eq(investments.id, id));
+    return investment;
+  }
+  
+  async createInvestment(insertInvestment: InsertInvestment): Promise<Investment> {
+    const [investment] = await db
+      .insert(investments)
+      .values(insertInvestment)
+      .returning();
+      
+    // Update net worth in finances
+    await this.updateNetWorth(investment.financesId);
+    
+    return investment;
+  }
+  
+  async updateInvestment(id: number, insertInvestment: InsertInvestment): Promise<Investment | undefined> {
+    const [updatedInvestment] = await db
+      .update(investments)
+      .set(insertInvestment)
+      .where(eq(investments.id, id))
+      .returning();
+    
+    if (updatedInvestment) {
+      // Update net worth in finances
+      await this.updateNetWorth(updatedInvestment.financesId);
+    }
+    
+    return updatedInvestment;
+  }
+  
+  async deleteInvestment(id: number): Promise<void> {
+    // Get the investment before deleting to know which finances to update
+    const [investment] = await db
+      .select()
+      .from(investments)
+      .where(eq(investments.id, id));
+    
+    if (investment) {
+      await db.delete(investments).where(eq(investments.id, id));
+      
+      // Update net worth in finances
+      await this.updateNetWorth(investment.financesId);
+    }
+  }
+  
+  // Financial Transactions methods
+  async getFinancialTransactions(financesId: number, accountId?: number): Promise<FinancialTransaction[]> {
+    if (accountId) {
+      return await db
+        .select()
+        .from(financialTransactions)
+        .where(and(
+          eq(financialTransactions.financesId, financesId),
+          eq(financialTransactions.accountId, accountId)
+        ));
+    } else {
+      return await db
+        .select()
+        .from(financialTransactions)
+        .where(eq(financialTransactions.financesId, financesId));
+    }
+  }
+  
+  async getFinancialTransaction(id: number): Promise<FinancialTransaction | undefined> {
+    const [transaction] = await db
+      .select()
+      .from(financialTransactions)
+      .where(eq(financialTransactions.id, id));
+    return transaction;
+  }
+  
+  async createFinancialTransaction(insertTransaction: InsertTransaction): Promise<FinancialTransaction> {
+    const [transaction] = await db
+      .insert(financialTransactions)
+      .values(insertTransaction)
+      .returning();
+    
+    // If this transaction is associated with an account, update the account balance
+    if (transaction.accountId) {
+      await this.updateAccountBalance(transaction.accountId);
+    }
+    
+    // Update savings and net worth
+    await this.updateFinancesSummary(transaction.financesId);
+    
+    return transaction;
+  }
+  
+  async updateFinancialTransaction(id: number, insertTransaction: InsertTransaction): Promise<FinancialTransaction | undefined> {
+    // Get the original transaction to check if the account changed
+    const [originalTransaction] = await db
+      .select()
+      .from(financialTransactions)
+      .where(eq(financialTransactions.id, id));
+    
+    const [updatedTransaction] = await db
+      .update(financialTransactions)
+      .set(insertTransaction)
+      .where(eq(financialTransactions.id, id))
+      .returning();
+    
+    if (!updatedTransaction) {
+      return undefined;
+    }
+    
+    // If the account changed, update both the old and new account balances
+    if (originalTransaction && originalTransaction.accountId !== updatedTransaction.accountId) {
+      if (originalTransaction.accountId) {
+        await this.updateAccountBalance(originalTransaction.accountId);
+      }
+    }
+    
+    // Update the current account balance
+    if (updatedTransaction.accountId) {
+      await this.updateAccountBalance(updatedTransaction.accountId);
+    }
+    
+    // Update savings and net worth
+    await this.updateFinancesSummary(updatedTransaction.financesId);
+    
+    return updatedTransaction;
+  }
+  
+  async deleteFinancialTransaction(id: number): Promise<void> {
+    // Get the transaction before deleting to know which account and finances to update
+    const [transaction] = await db
+      .select()
+      .from(financialTransactions)
+      .where(eq(financialTransactions.id, id));
+    
+    if (!transaction) {
+      return;
+    }
+    
+    await db.delete(financialTransactions).where(eq(financialTransactions.id, id));
+    
+    // If this transaction was associated with an account, update the account balance
+    if (transaction.accountId) {
+      await this.updateAccountBalance(transaction.accountId);
+    }
+    
+    // Update savings and net worth
+    await this.updateFinancesSummary(transaction.financesId);
+  }
+  
+  // Helper method to update net worth
+  private async updateNetWorth(financesId: number): Promise<void> {
+    // Get all accounts that should be included in net worth
+    const accounts = await db
+      .select()
+      .from(financialAccounts)
+      .where(and(
+        eq(financialAccounts.financesId, financesId),
+        eq(financialAccounts.includeInNetWorth, true)
+      ));
+    
+    // Get all investments
+    const investments = await db
+      .select()
+      .from(investments)
+      .where(eq(investments.financesId, financesId));
+    
+    // Calculate net worth as the sum of all account balances plus investment values
+    const accountsValue = accounts.reduce((sum, account) => sum + Number(account.balance), 0);
+    const investmentsValue = investments.reduce((sum, investment) => sum + Number(investment.value), 0);
+    
+    const netWorth = accountsValue + investmentsValue;
+    
+    // Update finances net worth
+    await db
+      .update(finances)
+      .set({ netWorth: netWorth.toString() })
+      .where(eq(finances.id, financesId));
+  }
+  
+  // Helper method to update account balance based on transactions
+  private async updateAccountBalance(accountId: number): Promise<void> {
+    // Get the account
+    const [account] = await db
+      .select()
+      .from(financialAccounts)
+      .where(eq(financialAccounts.id, accountId));
+    
+    if (!account) {
+      return;
+    }
+    
+    // Get all transactions for this account
+    const transactions = await db
+      .select()
+      .from(financialTransactions)
+      .where(eq(financialTransactions.accountId, accountId));
+    
+    // Calculate the balance from transactions
+    let balance = 0;
+    
+    for (const transaction of transactions) {
+      if (transaction.type === 'income') {
+        balance += Number(transaction.amount);
+      } else if (transaction.type === 'expense') {
+        balance -= Number(transaction.amount);
+      }
+      // For transfers, we would need to handle both sides of the transfer
+    }
+    
+    // Update the account balance
+    await db
+      .update(financialAccounts)
+      .set({ balance: balance.toString() })
+      .where(eq(financialAccounts.id, accountId));
+    
+    // Update net worth after account balance changes
+    await this.updateNetWorth(account.financesId);
+  }
+  
+  // Helper method to update savings and related metrics
+  private async updateFinancesSummary(financesId: number): Promise<void> {
+    // Get the finances record
+    const [financesRecord] = await db
+      .select()
+      .from(finances)
+      .where(eq(finances.id, financesId));
+    
+    if (!financesRecord) {
+      return;
+    }
+    
+    // Calculate savings as income - expenses
+    const income = Number(financesRecord.income);
+    const expenses = Number(financesRecord.expenses);
+    const savings = income - expenses;
+    
+    // Update the finances record
+    await db
+      .update(finances)
+      .set({ savings: savings.toString() })
+      .where(eq(finances.id, financesId));
+    
+    // Also update net worth
+    await this.updateNetWorth(financesId);
   }
 }
 

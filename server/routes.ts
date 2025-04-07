@@ -6,7 +6,11 @@ import {
   insertHabitSchema,
   insertGoalSchema,
   insertFinancesSchema,
-  insertExpenseCategorySchema
+  insertExpenseCategorySchema,
+  insertFinancialGoalSchema,
+  insertFinancialAccountSchema,
+  insertInvestmentSchema,
+  insertTransactionSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -171,9 +175,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Finances routes
-  app.get("/api/finances/:userId", async (req, res) => {
+  app.get("/api/finances", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : 1;
       const finances = await storage.getFinances(userId);
       if (!finances) {
         return res.status(404).json({ message: "Finances not found" });
@@ -266,6 +270,219 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete expense category" });
+    }
+  });
+  
+  // Financial Goals routes
+  app.get("/api/financial-goals/:financesId", async (req, res) => {
+    try {
+      const financesId = parseInt(req.params.financesId);
+      const goals = await storage.getFinancialGoals(financesId);
+      res.json(goals);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch financial goals" });
+    }
+  });
+
+  app.post("/api/financial-goals", async (req, res) => {
+    try {
+      const goalData = insertFinancialGoalSchema.parse(req.body);
+      const goal = await storage.createFinancialGoal(goalData);
+      res.status(201).json(goal);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid financial goal data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create financial goal" });
+      }
+    }
+  });
+
+  app.put("/api/financial-goals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const goalData = insertFinancialGoalSchema.parse(req.body);
+      const goal = await storage.updateFinancialGoal(id, goalData);
+      if (!goal) {
+        return res.status(404).json({ message: "Financial goal not found" });
+      }
+      res.json(goal);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid financial goal data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update financial goal" });
+      }
+    }
+  });
+
+  app.delete("/api/financial-goals/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteFinancialGoal(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete financial goal" });
+    }
+  });
+  
+  // Financial Accounts routes
+  app.get("/api/financial-accounts/:financesId", async (req, res) => {
+    try {
+      const financesId = parseInt(req.params.financesId);
+      const accounts = await storage.getFinancialAccounts(financesId);
+      res.json(accounts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch financial accounts" });
+    }
+  });
+
+  app.post("/api/financial-accounts", async (req, res) => {
+    try {
+      const accountData = insertFinancialAccountSchema.parse(req.body);
+      const account = await storage.createFinancialAccount(accountData);
+      res.status(201).json(account);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid financial account data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create financial account" });
+      }
+    }
+  });
+
+  app.put("/api/financial-accounts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const accountData = insertFinancialAccountSchema.parse(req.body);
+      const account = await storage.updateFinancialAccount(id, accountData);
+      if (!account) {
+        return res.status(404).json({ message: "Financial account not found" });
+      }
+      res.json(account);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid financial account data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update financial account" });
+      }
+    }
+  });
+
+  app.delete("/api/financial-accounts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteFinancialAccount(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete financial account" });
+    }
+  });
+  
+  // Investments routes
+  app.get("/api/investments/:financesId", async (req, res) => {
+    try {
+      const financesId = parseInt(req.params.financesId);
+      const investments = await storage.getInvestments(financesId);
+      res.json(investments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch investments" });
+    }
+  });
+
+  app.post("/api/investments", async (req, res) => {
+    try {
+      const investmentData = insertInvestmentSchema.parse(req.body);
+      const investment = await storage.createInvestment(investmentData);
+      res.status(201).json(investment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid investment data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create investment" });
+      }
+    }
+  });
+
+  app.put("/api/investments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const investmentData = insertInvestmentSchema.parse(req.body);
+      const investment = await storage.updateInvestment(id, investmentData);
+      if (!investment) {
+        return res.status(404).json({ message: "Investment not found" });
+      }
+      res.json(investment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid investment data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update investment" });
+      }
+    }
+  });
+
+  app.delete("/api/investments/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteInvestment(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete investment" });
+    }
+  });
+  
+  // Financial Transactions routes
+  app.get("/api/financial-transactions/:financesId", async (req, res) => {
+    try {
+      const financesId = parseInt(req.params.financesId);
+      const accountId = req.query.accountId ? parseInt(req.query.accountId as string) : undefined;
+      const transactions = await storage.getFinancialTransactions(financesId, accountId);
+      res.json(transactions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch financial transactions" });
+    }
+  });
+
+  app.post("/api/financial-transactions", async (req, res) => {
+    try {
+      const transactionData = insertTransactionSchema.parse(req.body);
+      const transaction = await storage.createFinancialTransaction(transactionData);
+      res.status(201).json(transaction);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid transaction data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to create financial transaction" });
+      }
+    }
+  });
+
+  app.put("/api/financial-transactions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const transactionData = insertTransactionSchema.parse(req.body);
+      const transaction = await storage.updateFinancialTransaction(id, transactionData);
+      if (!transaction) {
+        return res.status(404).json({ message: "Financial transaction not found" });
+      }
+      res.json(transaction);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid transaction data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update financial transaction" });
+      }
+    }
+  });
+
+  app.delete("/api/financial-transactions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteFinancialTransaction(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete financial transaction" });
     }
   });
 
