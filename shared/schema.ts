@@ -185,8 +185,7 @@ export const financesRelations = relations(finances, ({ one, many }) => ({
 }));
 
 export const insertFinancesSchema = createInsertSchema(finances).omit({ 
-  id: true, 
-  expenses: true,
+  id: true,
   createdAt: true, 
   updatedAt: true 
 });
