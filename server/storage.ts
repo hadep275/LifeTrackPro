@@ -234,11 +234,18 @@ export class DatabaseStorage implements IStorage {
         .from(financialTransactions)
         .where(eq(financialTransactions.financesId, financesRecord.id));
     
-      // Get associated recurring bills
-      const recurringBills = await db
-        .select()
-        .from(recurringBills)
-        .where(eq(recurringBills.financesId, financesRecord.id));
+      // Get associated recurring bills - this might fail if the table doesn't exist yet
+      let recurringBillsList = [];
+      try {
+        const recurringBills = await db
+          .select()
+          .from(recurringBills)
+          .where(eq(recurringBills.financesId, financesRecord.id));
+        recurringBillsList = recurringBills;
+      } catch (err) {
+        console.log("DEBUG: Could not fetch recurring bills, the table might not exist yet:", err);
+        // Continue without recurring bills data
+      }
         
       // Convert null values to undefined to match the Finances interface
       const returnData = {
@@ -248,7 +255,7 @@ export class DatabaseStorage implements IStorage {
         accounts: accounts,
         investments: investmentsList,
         transactions: transactions,
-        recurringBills: recurringBills,
+        recurringBills: recurringBillsList,
         retirementAge: financesRecord.retirementAge === null ? undefined : financesRecord.retirementAge,
         currentAge: financesRecord.currentAge === null ? undefined : financesRecord.currentAge
       };
@@ -333,11 +340,18 @@ export class DatabaseStorage implements IStorage {
         .from(financialTransactions)
         .where(eq(financialTransactions.financesId, id));
       
-      // Get associated recurring bills
-      const recurringBills = await db
-        .select()
-        .from(recurringBills)
-        .where(eq(recurringBills.financesId, id));
+      // Get associated recurring bills - this might fail if the table doesn't exist yet
+      let recurringBillsList = [];
+      try {
+        const recurringBillsData = await db
+          .select()
+          .from(recurringBills)
+          .where(eq(recurringBills.financesId, id));
+        recurringBillsList = recurringBillsData;
+      } catch (err) {
+        console.log("DEBUG: Could not fetch recurring bills in updateFinances, the table might not exist yet:", err);
+        // Continue without recurring bills data
+      }
       
       // Convert null values to undefined to match the Finances interface
       const returnData = {
@@ -347,7 +361,7 @@ export class DatabaseStorage implements IStorage {
         accounts: accounts,
         investments: investmentsList,
         transactions: transactions,
-        recurringBills: recurringBills,
+        recurringBills: recurringBillsList,
         retirementAge: updatedFinances.retirementAge === null ? undefined : updatedFinances.retirementAge,
         currentAge: updatedFinances.currentAge === null ? undefined : updatedFinances.currentAge
       };
