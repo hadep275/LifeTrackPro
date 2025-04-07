@@ -25,30 +25,20 @@ const Header = () => {
         </div>
         <div className="flex items-center justify-between w-full sm:w-auto">
           <nav className="flex flex-wrap justify-center">
-            <Link href="/">
-              <a className={`px-3 py-2 font-medium ${isActive("/")}`}>
-                Dashboard
-              </a>
+            <Link href="/" className={`px-3 py-2 font-medium ${isActive("/")}`}>
+              Dashboard
             </Link>
-            <Link href="/tasks">
-              <a className={`px-3 py-2 font-medium ${isActive("/tasks")}`}>
-                Tasks
-              </a>
+            <Link href="/tasks" className={`px-3 py-2 font-medium ${isActive("/tasks")}`}>
+              Tasks
             </Link>
-            <Link href="/habits">
-              <a className={`px-3 py-2 font-medium ${isActive("/habits")}`}>
-                Habits
-              </a>
+            <Link href="/habits" className={`px-3 py-2 font-medium ${isActive("/habits")}`}>
+              Habits
             </Link>
-            <Link href="/goals">
-              <a className={`px-3 py-2 font-medium ${isActive("/goals")}`}>
-                Goals
-              </a>
+            <Link href="/goals" className={`px-3 py-2 font-medium ${isActive("/goals")}`}>
+              Goals
             </Link>
-            <Link href="/finances">
-              <a className={`px-3 py-2 font-medium ${isActive("/finances")}`}>
-                Finances
-              </a>
+            <Link href="/finances" className={`px-3 py-2 font-medium ${isActive("/finances")}`}>
+              Finances
             </Link>
           </nav>
           <div className="hidden sm:block ml-4">

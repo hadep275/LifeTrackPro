@@ -1,4 +1,12 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle,
+  CardFooter
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { DollarSign } from "lucide-react";
 import { Finances } from "@shared/schema";
 
 interface FinanceSummaryProps {
@@ -7,37 +15,49 @@ interface FinanceSummaryProps {
 }
 
 const FinanceSummary = ({ finances, onViewAll }: FinanceSummaryProps) => {
-  const balance = finances.income - finances.expenses;
+  const balance = Number(finances.income) - Number(finances.expenses);
   
   return (
-    <Card className="bg-white shadow-sm border border-slate-200">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-lg">Financial Overview</h3>
-          <button 
-            onClick={onViewAll}
-            className="text-primary-dark text-sm hover:underline"
-          >
-            View All
-          </button>
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <DollarSign className="h-5 w-5 text-primary" />
+            Financial Overview
+          </CardTitle>
         </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-green-50 p-3 rounded-lg">
-            <p className="text-xs text-green-700 mb-1">Monthly Income</p>
-            <p className="text-xl font-bold text-green-700">${finances.income.toFixed(2)}</p>
+          <div className="bg-emerald-500/10 dark:bg-emerald-500/20 p-3 rounded-lg">
+            <p className="text-xs text-emerald-700 dark:text-emerald-300 mb-1">Monthly Income</p>
+            <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
+              ${Number(finances.income).toFixed(2)}
+            </p>
           </div>
-          <div className="bg-red-50 p-3 rounded-lg">
-            <p className="text-xs text-red-700 mb-1">Monthly Expenses</p>
-            <p className="text-xl font-bold text-red-700">${finances.expenses.toFixed(2)}</p>
+          <div className="bg-red-500/10 dark:bg-red-500/20 p-3 rounded-lg">
+            <p className="text-xs text-red-700 dark:text-red-300 mb-1">Monthly Expenses</p>
+            <p className="text-xl font-bold text-red-700 dark:text-red-300">
+              ${Number(finances.expenses).toFixed(2)}
+            </p>
           </div>
         </div>
-        <div className="bg-slate-50 p-3 rounded-lg">
-          <p className="text-xs text-slate-700 mb-1">Net Worth</p>
-          <p className={`text-xl font-bold ${balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+        <div className="bg-muted/50 p-3 rounded-lg">
+          <p className="text-xs text-muted-foreground mb-1">Net Balance</p>
+          <p className={`text-xl font-bold ${
+            balance >= 0 
+              ? 'text-emerald-700 dark:text-emerald-300' 
+              : 'text-red-700 dark:text-red-300'
+          }`}>
             ${balance.toFixed(2)}
           </p>
         </div>
       </CardContent>
+      <CardFooter>
+        <Button variant="outline" size="sm" onClick={onViewAll} className="w-full">
+          View All Finances
+        </Button>
+      </CardFooter>
     </Card>
   );
 };
