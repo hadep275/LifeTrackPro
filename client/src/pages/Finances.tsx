@@ -498,6 +498,7 @@ const Finances = () => {
     createFinancesMutation.mutate({
       userId: userId,
       income: "0",
+      expenses: "0", // Adding expenses which is required
       savings: "0",
       netWorth: "0"
     });

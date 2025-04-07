@@ -176,26 +176,58 @@ const CalendarView = ({ tasks, goals, habits = [], finances }: CalendarViewProps
       });
     }
     
-    // Add finance events (like credit card due dates, loan payments)
-    if (finances && finances.expenseCategories) {
-      // For this example, we'll assign a due date to expense categories on the 1st and 15th of each month
-      const dayOfMonth = date.getDate();
-      
-      // Create payment events on the 1st and 15th of the month
-      if (dayOfMonth === 1 || dayOfMonth === 15) {
-        finances.expenseCategories.filter(cat => 
-          // Example: Credit card payments on 1st, loans on 15th
-          (dayOfMonth === 1 && cat.name.toLowerCase().includes('credit')) ||
-          (dayOfMonth === 15 && cat.name.toLowerCase().includes('loan'))
-        ).forEach(category => {
-          events.push({
-            id: `finance-${category.id}`,
-            title: `${category.name} Payment Due`,
-            type: 'finance',
-            details: `Monthly payment for ${category.name}`,
-            amount: Number(category.amount)
-          });
+    // Add finance events (recurring bills and financial goals)
+    if (finances) {
+      // Add recurring bills
+      if (finances.recurringBills && finances.recurringBills.length > 0) {
+        finances.recurringBills.forEach(bill => {
+          if (bill.nextDueDate === dateString) {
+            events.push({
+              id: `bill-${bill.id}`,
+              title: `${bill.name} Due`,
+              type: 'finance',
+              details: bill.description || `Payment due for ${bill.name}`,
+              amount: Number(bill.amount)
+            });
+          }
         });
+      }
+      
+      // Add financial goals with target dates
+      if (finances.financialGoals && finances.financialGoals.length > 0) {
+        finances.financialGoals.forEach(goal => {
+          if (goal.targetDate === dateString) {
+            events.push({
+              id: `finance-goal-${goal.id}`,
+              title: `${goal.name} Target Date`,
+              type: 'finance',
+              details: goal.description || `Target date for financial goal: ${goal.name}`,
+              amount: Number(goal.targetAmount)
+            });
+          }
+        });
+      }
+      
+      // Also keep the original expense categories logic
+      if (finances.expenseCategories) {
+        const dayOfMonth = date.getDate();
+        
+        // Create payment events on the 1st and 15th of the month for expense categories
+        if (dayOfMonth === 1 || dayOfMonth === 15) {
+          finances.expenseCategories.filter(cat => 
+            // Example: Credit card payments on 1st, loans on 15th
+            (dayOfMonth === 1 && cat.name.toLowerCase().includes('credit')) ||
+            (dayOfMonth === 15 && cat.name.toLowerCase().includes('loan'))
+          ).forEach(category => {
+            events.push({
+              id: `finance-${category.id}`,
+              title: `${category.name} Payment Due`,
+              type: 'finance',
+              details: `Monthly payment for ${category.name}`,
+              amount: Number(category.amount)
+            });
+          });
+        }
       }
     }
     

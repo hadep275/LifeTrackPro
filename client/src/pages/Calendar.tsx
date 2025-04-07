@@ -70,7 +70,10 @@ const Calendar = () => {
   // Toggle task completion
   const toggleTask = useMutation({
     mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      await apiRequest(`/api/tasks/${id}`, "PATCH", { completed });
+      await apiRequest(`/api/tasks/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ completed })
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
