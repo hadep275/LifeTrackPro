@@ -190,13 +190,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/finances", async (req, res) => {
     try {
+      console.log("DEBUG: Creating finances request body:", JSON.stringify(req.body));
       const financesData = insertFinancesSchema.parse(req.body);
+      console.log("DEBUG: Parsed finances data:", JSON.stringify(financesData));
       const finances = await storage.createFinances(financesData);
       res.status(201).json(finances);
     } catch (error) {
+      console.error("DEBUG: Error creating finances:", error);
       if (error instanceof z.ZodError) {
+        console.error("DEBUG: Zod validation error:", JSON.stringify(error.errors));
         res.status(400).json({ message: "Invalid finances data", errors: error.errors });
       } else {
+        console.error("DEBUG: Unknown error:", error instanceof Error ? error.message : String(error));
         res.status(500).json({ message: "Failed to create finances" });
       }
     }

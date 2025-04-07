@@ -290,14 +290,19 @@ const Finances = () => {
   });
 
   const createFinancesMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest<FinancesType>('/api/finances', {
+    mutationFn: async (data: InsertFinances) => {
+      console.log("DEBUG: Sending finances data:", JSON.stringify(data));
+      return await apiRequest<Finances>('/api/finances', {
         method: 'POST',
         body: JSON.stringify(data)
       });
     },
     onSuccess: () => {
+      console.log("DEBUG: Finances created successfully");
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
+    },
+    onError: (error) => {
+      console.error("DEBUG: Error creating finances:", error);
     }
   });
 
@@ -495,10 +500,11 @@ const Finances = () => {
 
   // If no finances found, create a default one
   const handleCreateInitialFinances = () => {
+    console.log("Creating initial finances with userId:", userId);
     createFinancesMutation.mutate({
       userId: userId,
       income: "0",
-      expenses: "0", // Adding expenses which is required
+      expenses: "0", 
       savings: "0",
       netWorth: "0"
     });
