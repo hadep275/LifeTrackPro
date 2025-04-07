@@ -202,13 +202,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/finances", async (req, res) => {
     try {
       const userId = req.query.userId ? parseInt(req.query.userId as string) : 1;
+      console.log(`DEBUG: GET /api/finances - Fetching finances for userId: ${userId}`);
+      
       const finances = await storage.getFinances(userId);
+      
       if (!finances) {
+        console.log(`DEBUG: GET /api/finances - No finances found for userId: ${userId}`);
         return res.status(404).json({ message: "Finances not found" });
       }
+      
+      console.log(`DEBUG: GET /api/finances - Successfully retrieved finances for userId: ${userId}, financesId: ${finances.id}`);
       res.json(finances);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch finances" });
+      console.error("DEBUG: GET /api/finances - Error:", error);
+      res.status(500).json({ message: "Failed to fetch finances", error: String(error) });
     }
   });
 

@@ -186,136 +186,177 @@ export class DatabaseStorage implements IStorage {
   
   // Finances methods
   async getFinances(userId: number): Promise<Finances | undefined> {
-    // Get the finances record
-    const [financesRecord] = await db
-      .select()
-      .from(finances)
-      .where(eq(finances.userId, userId));
+    console.log(`DEBUG: Getting finances for userId: ${userId}`);
+    try {
+      // Get the finances record
+      const financesRecords = await db
+        .select()
+        .from(finances)
+        .where(eq(finances.userId, userId));
+      
+      console.log(`DEBUG: Found ${financesRecords.length} finances records:`, JSON.stringify(financesRecords));
+      
+      if (financesRecords.length === 0) {
+        return undefined;
+      }
+      
+      // Use the latest finances record if there are multiple
+      const financesRecord = financesRecords[financesRecords.length - 1];
+      console.log(`DEBUG: Using finances record with ID: ${financesRecord.id}`);
+      
+      // Get associated expense categories
+      const categories = await db
+        .select()
+        .from(expenseCategories)
+        .where(eq(expenseCategories.financesId, financesRecord.id));
     
-    if (!financesRecord) {
-      return undefined;
+      // Get associated financial goals
+      const goals = await db
+        .select()
+        .from(financialGoals)
+        .where(eq(financialGoals.financesId, financesRecord.id));
+    
+      // Get associated financial accounts
+      const accounts = await db
+        .select()
+        .from(financialAccounts)
+        .where(eq(financialAccounts.financesId, financesRecord.id));
+    
+      // Get associated investments
+      const investmentsList = await db
+        .select()
+        .from(investments)
+        .where(eq(investments.financesId, financesRecord.id));
+    
+      // Get associated transactions
+      const transactions = await db
+        .select()
+        .from(financialTransactions)
+        .where(eq(financialTransactions.financesId, financesRecord.id));
+    
+      // Get associated recurring bills
+      const recurringBills = await db
+        .select()
+        .from(recurringBills)
+        .where(eq(recurringBills.financesId, financesRecord.id));
+        
+      // Convert null values to undefined to match the Finances interface
+      const returnData = {
+        ...financesRecord,
+        expenseCategories: categories,
+        financialGoals: goals,
+        accounts: accounts,
+        investments: investmentsList,
+        transactions: transactions,
+        recurringBills: recurringBills,
+        retirementAge: financesRecord.retirementAge === null ? undefined : financesRecord.retirementAge,
+        currentAge: financesRecord.currentAge === null ? undefined : financesRecord.currentAge
+      };
+    
+      return returnData as Finances;
+    } catch (error) {
+      console.error("DEBUG: Error in getFinances:", error);
+      throw error;
     }
-    
-    // Get associated expense categories
-    const categories = await db
-      .select()
-      .from(expenseCategories)
-      .where(eq(expenseCategories.financesId, financesRecord.id));
-    
-    // Get associated financial goals
-    const goals = await db
-      .select()
-      .from(financialGoals)
-      .where(eq(financialGoals.financesId, financesRecord.id));
-    
-    // Get associated financial accounts
-    const accounts = await db
-      .select()
-      .from(financialAccounts)
-      .where(eq(financialAccounts.financesId, financesRecord.id));
-    
-    // Get associated investments
-    const investmentsList = await db
-      .select()
-      .from(investments)
-      .where(eq(investments.financesId, financesRecord.id));
-    
-    // Get associated transactions
-    const transactions = await db
-      .select()
-      .from(financialTransactions)
-      .where(eq(financialTransactions.financesId, financesRecord.id));
-    
-    // Convert null values to undefined to match the Finances interface
-    const returnData = {
-      ...financesRecord,
-      expenseCategories: categories,
-      financialGoals: goals,
-      accounts: accounts,
-      investments: investmentsList,
-      transactions: transactions,
-      retirementAge: financesRecord.retirementAge === null ? undefined : financesRecord.retirementAge,
-      currentAge: financesRecord.currentAge === null ? undefined : financesRecord.currentAge
-    };
-    
-    return returnData as Finances;
   }
   
   async createFinances(insertFinances: InsertFinances): Promise<Finances> {
-    const [financesRecord] = await db
-      .insert(finances)
-      .values(insertFinances)
-      .returning();
-    
-    // Convert null values to undefined to match the Finances interface
-    const returnData = {
-      ...financesRecord,
-      expenseCategories: [],
-      financialGoals: [],
-      accounts: [],
-      investments: [],
-      transactions: [],
-      retirementAge: financesRecord.retirementAge === null ? undefined : financesRecord.retirementAge,
-      currentAge: financesRecord.currentAge === null ? undefined : financesRecord.currentAge
-    };
-    
-    return returnData as Finances;
+    try {
+      const [financesRecord] = await db
+        .insert(finances)
+        .values(insertFinances)
+        .returning();
+      
+      console.log(`DEBUG: Created finances record with ID: ${financesRecord.id}`);
+      
+      // Convert null values to undefined to match the Finances interface
+      const returnData = {
+        ...financesRecord,
+        expenseCategories: [],
+        financialGoals: [],
+        accounts: [],
+        investments: [],
+        transactions: [],
+        recurringBills: [],
+        retirementAge: financesRecord.retirementAge === null ? undefined : financesRecord.retirementAge,
+        currentAge: financesRecord.currentAge === null ? undefined : financesRecord.currentAge
+      };
+      
+      return returnData as Finances;
+    } catch (error) {
+      console.error("DEBUG: Error in createFinances:", error);
+      throw error;
+    }
   }
   
   async updateFinances(id: number, insertFinances: InsertFinances): Promise<Finances | undefined> {
-    const [updatedFinances] = await db
-      .update(finances)
-      .set(insertFinances)
-      .where(eq(finances.id, id))
-      .returning();
-    
-    if (!updatedFinances) {
-      return undefined;
+    try {
+      const [updatedFinances] = await db
+        .update(finances)
+        .set(insertFinances)
+        .where(eq(finances.id, id))
+        .returning();
+      
+      if (!updatedFinances) {
+        return undefined;
+      }
+      
+      console.log(`DEBUG: Updated finances record with ID: ${updatedFinances.id}`);
+      
+      // Get associated expense categories
+      const categories = await db
+        .select()
+        .from(expenseCategories)
+        .where(eq(expenseCategories.financesId, id));
+      
+      // Get associated financial goals
+      const goals = await db
+        .select()
+        .from(financialGoals)
+        .where(eq(financialGoals.financesId, id));
+      
+      // Get associated financial accounts
+      const accounts = await db
+        .select()
+        .from(financialAccounts)
+        .where(eq(financialAccounts.financesId, id));
+      
+      // Get associated investments
+      const investmentsList = await db
+        .select()
+        .from(investments)
+        .where(eq(investments.financesId, id));
+      
+      // Get associated transactions
+      const transactions = await db
+        .select()
+        .from(financialTransactions)
+        .where(eq(financialTransactions.financesId, id));
+      
+      // Get associated recurring bills
+      const recurringBills = await db
+        .select()
+        .from(recurringBills)
+        .where(eq(recurringBills.financesId, id));
+      
+      // Convert null values to undefined to match the Finances interface
+      const returnData = {
+        ...updatedFinances,
+        expenseCategories: categories,
+        financialGoals: goals,
+        accounts: accounts,
+        investments: investmentsList,
+        transactions: transactions,
+        recurringBills: recurringBills,
+        retirementAge: updatedFinances.retirementAge === null ? undefined : updatedFinances.retirementAge,
+        currentAge: updatedFinances.currentAge === null ? undefined : updatedFinances.currentAge
+      };
+      
+      return returnData as Finances;
+    } catch (error) {
+      console.error("DEBUG: Error in updateFinances:", error);
+      throw error;
     }
-    
-    // Get associated expense categories
-    const categories = await db
-      .select()
-      .from(expenseCategories)
-      .where(eq(expenseCategories.financesId, id));
-    
-    // Get associated financial goals
-    const goals = await db
-      .select()
-      .from(financialGoals)
-      .where(eq(financialGoals.financesId, id));
-    
-    // Get associated financial accounts
-    const accounts = await db
-      .select()
-      .from(financialAccounts)
-      .where(eq(financialAccounts.financesId, id));
-    
-    // Get associated investments
-    const investmentsList = await db
-      .select()
-      .from(investments)
-      .where(eq(investments.financesId, id));
-    
-    // Get associated transactions
-    const transactions = await db
-      .select()
-      .from(financialTransactions)
-      .where(eq(financialTransactions.financesId, id));
-    
-    // Convert null values to undefined to match the Finances interface
-    const returnData = {
-      ...updatedFinances,
-      expenseCategories: categories,
-      financialGoals: goals,
-      accounts: accounts,
-      investments: investmentsList,
-      transactions: transactions,
-      retirementAge: updatedFinances.retirementAge === null ? undefined : updatedFinances.retirementAge,
-      currentAge: updatedFinances.currentAge === null ? undefined : updatedFinances.currentAge
-    };
-    
-    return returnData as Finances;
   }
   
   // Expense Categories methods
