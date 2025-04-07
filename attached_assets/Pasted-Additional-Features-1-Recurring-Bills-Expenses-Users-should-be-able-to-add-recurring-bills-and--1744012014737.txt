@@ -1,0 +1,114 @@
+Additional Features:
+1. Recurring Bills & Expenses:
+Users should be able to add recurring bills and expenses with a frequency (weekly, monthly, yearly, etc.).
+
+For each recurring bill, users should specify:
+
+Bill Name
+
+Amount
+
+Due Date
+
+Frequency (Weekly, Monthly, Yearly)
+
+The app will automatically add a new entry for the bill every week or month, based on the selected frequency.
+
+2. Integration with the Calendar:
+The recurring bills and expenses will be displayed on the calendar based on the due date and frequency.
+
+For example, if a user adds a bill due on the 1st of every month, a new entry will be automatically added to the calendar on the 1st day of each month.
+
+Similarly, for weekly bills, a new entry will appear every week on the correct day.
+
+Updated Functionality Breakdown:
+Recurring Bill Creation:
+
+When the user creates a new bill or expense, they will have an option to set the recurrence frequency:
+
+Weekly
+
+Monthly
+
+Custom (every X days)
+
+The start date will be specified, and the app will automatically calculate when the next occurrence of the bill should be due.
+
+Tracking Recurring Bills in the Calendar:
+
+Each time a bill is added to the system, whether it's one-time or recurring, it will be added to the calendar on the relevant date.
+
+The recurring bills will repeat automatically based on their frequency, and they will appear on the calendar each time they are due.
+
+Tracking Payments for Recurring Bills:
+
+Users should be able to mark recurring bills as paid when they pay them, and the app should adjust the bill’s status.
+
+Optionally, you can show a visual reminder (like a checkmark) when the bill is marked as paid.
+
+Prompt Update:
+Here’s an updated prompt with the recurring bill functionality:
+
+MVP for Comprehensive Task Manager, Habit Tracker, Goal Tracker, Budgeting App with Recurring Bills:
+
+Goal: Build an MVP for a task manager, habit tracker, goal tracker, and budgeting app that includes the ability to track recurring bills (weekly, monthly), expenses, and display them on the calendar. Use vanilla HTML, CSS, JavaScript, and React JS.
+
+New Key Functionalities:
+1. Recurring Bills & Expenses:
+Users can add recurring bills and expenses with:
+
+Bill Name
+
+Amount
+
+Due Date
+
+Frequency (Weekly, Monthly, or Custom)
+
+For weekly bills, users can specify the day of the week they are due.
+
+For monthly bills, users can specify the day of the month they are due (e.g., the 1st, the 15th, or the last day of the month).
+
+Optionally, for custom recurrence, users can set bills to repeat every X number of days.
+
+2. Calendar View:
+Recurring bills and expenses will automatically appear on the calendar based on their recurrence pattern.
+
+Weekly bills will repeat every week on the specified day.
+
+Monthly bills will repeat every month on the specified date.
+
+Past due bills can be marked as paid, and the status will be updated in the calendar.
+
+3. Bill Payment Tracking:
+Users can mark recurring bills as paid each month/week.
+
+Once a bill is marked as paid, it should update the calendar and reflect the payment in the budget section.
+
+Optionally, users can see a history of past payments for recurring bills.
+
+4. Expense & Budgeting Section Update:
+The budget tracker should automatically update with the recurring bill as part of the monthly expenses.
+
+The net worth and budget tracker will also reflect recurring payments as part of the ongoing financial data.
+
+Updated React Components:
+RecurringBillManager Component:
+
+Allows users to add and manage recurring bills (weekly, monthly, or custom).
+
+Handles the logic to calculate when the next occurrence is and whether it should show on the calendar.
+
+CalendarComponent:
+
+Displays the bills (and tasks) for each day.
+
+Automatically adds recurring bills on the correct days.
+
+Allows users to view all due bills/expenses for a specific date.
+
+BudgetTracker Component:
+
+Reflects both one-time and recurring bills in the budget totals.
+
+Users can see their balance and expenses for the month, and recurring bills will be included in these calculations.

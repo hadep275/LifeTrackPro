@@ -40,7 +40,10 @@ import {
   InsertExpenseCategory, 
   InsertFinancialGoal, 
   InsertFinancialAccount, 
-  InsertInvestment 
+  InsertInvestment,
+  InsertRecurringBill,
+  RecurringBill,
+  billFrequencyEnum
 } from "@shared/schema";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -224,6 +227,20 @@ const Finances = () => {
     purchasePrice: "0",
     color: "#3B82F6"
   });
+  
+  const [newRecurringBill, setNewRecurringBill] = useState<Partial<InsertRecurringBill>>({
+    name: "",
+    amount: "0",
+    description: "",
+    category: "",
+    frequency: "monthly",
+    startDate: new Date().toISOString().split('T')[0],
+    nextDueDate: new Date().toISOString().split('T')[0],
+    dayOfMonth: new Date().getDate(),
+    color: "#3B82F6",
+    autoPay: false,
+    reminderDays: 3
+  });
 
   // Calculator states
   const [retirementCalcInputs, setRetirementCalcInputs] = useState({
@@ -267,37 +284,42 @@ const Finances = () => {
   // Query and Mutation definitions
   const { data: finances, isLoading: isFinancesLoading } = useQuery({
     queryKey: ['/api/finances'],
-    queryFn: () => apiRequest<FinancesType>('/api/finances'),
+    queryFn: async () => {
+      return await apiRequest<FinancesType>('/api/finances');
+    },
   });
 
   const createFinancesMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/finances', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }),
+    mutationFn: async (data: any) => {
+      return await apiRequest<FinancesType>('/api/finances', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
     }
   });
 
   const updateFinancesMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number, data: any }) => apiRequest(`/api/finances/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }),
+    mutationFn: async ({ id, data }: { id: number, data: any }) => {
+      return await apiRequest<FinancesType>(`/api/finances/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
     }
   });
 
   const createExpenseCategoryMutation = useMutation({
-    mutationFn: (data: InsertExpenseCategory) => apiRequest('/api/expense-categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }),
+    mutationFn: async (data: InsertExpenseCategory) => {
+      return await apiRequest<ExpenseCategory>('/api/expense-categories', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
       setNewExpenseCategory({
@@ -310,20 +332,23 @@ const Finances = () => {
   });
 
   const deleteExpenseCategoryMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/expense-categories/${id}`, {
-      method: 'DELETE'
-    }),
+    mutationFn: async (id: number) => {
+      return await apiRequest(`/api/expense-categories/${id}`, {
+        method: 'DELETE'
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
     }
   });
 
   const createFinancialGoalMutation = useMutation({
-    mutationFn: (data: InsertFinancialGoal) => apiRequest('/api/financial-goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }),
+    mutationFn: async (data: InsertFinancialGoal) => {
+      return await apiRequest<FinancialGoal>('/api/financial-goals', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
       setNewFinancialGoal({
@@ -338,31 +363,35 @@ const Finances = () => {
   });
 
   const updateFinancialGoalMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number, data: Partial<InsertFinancialGoal> }) => apiRequest(`/api/financial-goals/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }),
+    mutationFn: async ({ id, data }: { id: number, data: Partial<InsertFinancialGoal> }) => {
+      return await apiRequest<FinancialGoal>(`/api/financial-goals/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
     }
   });
 
   const deleteFinancialGoalMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/financial-goals/${id}`, {
-      method: 'DELETE'
-    }),
+    mutationFn: async (id: number) => {
+      return await apiRequest(`/api/financial-goals/${id}`, {
+        method: 'DELETE'
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
     }
   });
 
   const createAccountMutation = useMutation({
-    mutationFn: (data: InsertFinancialAccount) => apiRequest('/api/financial-accounts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }),
+    mutationFn: async (data: InsertFinancialAccount) => {
+      return await apiRequest<FinancialAccount>('/api/financial-accounts', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
       setNewAccount({
@@ -376,20 +405,23 @@ const Finances = () => {
   });
 
   const deleteAccountMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/financial-accounts/${id}`, {
-      method: 'DELETE'
-    }),
+    mutationFn: async (id: number) => {
+      return await apiRequest(`/api/financial-accounts/${id}`, {
+        method: 'DELETE'
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
     }
   });
 
   const createInvestmentMutation = useMutation({
-    mutationFn: (data: InsertInvestment) => apiRequest('/api/investments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }),
+    mutationFn: async (data: InsertInvestment) => {
+      return await apiRequest<Investment>('/api/investments', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
       setNewInvestment({
@@ -403,9 +435,59 @@ const Finances = () => {
   });
 
   const deleteInvestmentMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/investments/${id}`, {
-      method: 'DELETE'
-    }),
+    mutationFn: async (id: number) => {
+      return await apiRequest(`/api/investments/${id}`, {
+        method: 'DELETE'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
+    }
+  });
+  
+  const createRecurringBillMutation = useMutation({
+    mutationFn: async (data: InsertRecurringBill) => {
+      return await apiRequest<RecurringBill>('/api/recurring-bills', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
+      setNewRecurringBill({
+        name: "",
+        amount: "0",
+        description: "",
+        category: "",
+        frequency: "monthly",
+        startDate: new Date().toISOString().split('T')[0],
+        nextDueDate: new Date().toISOString().split('T')[0],
+        dayOfMonth: new Date().getDate(),
+        color: "#3B82F6",
+        autoPay: false,
+        reminderDays: 3
+      });
+    }
+  });
+  
+  const updateRecurringBillMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number, data: Partial<InsertRecurringBill> }) => {
+      return await apiRequest<RecurringBill>(`/api/recurring-bills/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
+    }
+  });
+  
+  const deleteRecurringBillMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest(`/api/recurring-bills/${id}`, {
+        method: 'DELETE'
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/finances'] });
     }
@@ -495,6 +577,18 @@ const Finances = () => {
       purchaseDate: new Date().toISOString().split('T')[0],
       notes: newInvestment.notes || ""
     } as InsertInvestment);
+  };
+  
+  // Add recurring bill
+  const handleAddRecurringBill = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!finances) return;
+    
+    createRecurringBillMutation.mutate({
+      ...newRecurringBill,
+      financesId: finances.id
+    } as InsertRecurringBill);
   };
 
   // Update financial goal progress
@@ -659,10 +753,14 @@ const Finances = () => {
       <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Financial Dashboard</h1>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4 grid grid-cols-2 md:grid-cols-5 gap-2">
+        <TabsList className="mb-4 grid grid-cols-2 md:grid-cols-6 gap-2">
           <TabsTrigger value="overview" className="flex items-center">
             <LineChart className="h-4 w-4 mr-2" />
             <span>Overview</span>
+          </TabsTrigger>
+          <TabsTrigger value="bills" className="flex items-center">
+            <CreditCard className="h-4 w-4 mr-2" />
+            <span>Bills</span>
           </TabsTrigger>
           <TabsTrigger value="goals" className="flex items-center">
             <Target className="h-4 w-4 mr-2" />
@@ -945,6 +1043,287 @@ const Finances = () => {
                   </ReLineChart>
                 </ResponsiveContainer>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Bills Tab */}
+        <TabsContent value="bills" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex justify-between items-center">
+                <span>Recurring Bills</span>
+              </CardTitle>
+              <CardDescription>Manage your regular monthly and weekly expenses</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {finances.recurringBills && finances.recurringBills.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {finances.recurringBills.map((bill) => {
+                      const nextDueDate = new Date(bill.nextDueDate);
+                      const isOverdue = nextDueDate < new Date();
+                      const daysUntilDue = Math.ceil((nextDueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                      const needsReminder = daysUntilDue <= bill.reminderDays && !isOverdue;
+                      
+                      return (
+                        <Card key={bill.id} className={`
+                          overflow-hidden
+                          ${isOverdue ? 'border-red-500 dark:border-red-700' : ''}
+                          ${needsReminder ? 'border-yellow-500 dark:border-yellow-700' : ''}
+                        `}>
+                          <div className="h-2" style={{ backgroundColor: bill.color || '#3B82F6' }}></div>
+                          <CardHeader className="pb-2">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <CardTitle className="text-lg">{bill.name}</CardTitle>
+                                <CardDescription>{bill.description}</CardDescription>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                onClick={() => deleteRecurringBillMutation.mutate(bill.id)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
+                                size="sm"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pb-2">
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <p className="text-slate-500">Amount</p>
+                                <p className="font-medium">{formatCurrency(bill.amount)}</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-500">Frequency</p>
+                                <p className="font-medium capitalize">{bill.frequency}</p>
+                              </div>
+                              <div>
+                                <p className="text-slate-500">Next Due</p>
+                                <p className={`font-medium ${isOverdue ? 'text-red-500' : (needsReminder ? 'text-yellow-500' : '')}`}>
+                                  {new Date(bill.nextDueDate).toLocaleDateString()}
+                                  {isOverdue && <span className="ml-2 text-xs bg-red-100 text-red-800 px-1 py-0.5 rounded">Overdue</span>}
+                                  {needsReminder && !isOverdue && <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-1 py-0.5 rounded">Soon</span>}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-slate-500">Auto-Pay</p>
+                                <p className="font-medium">{bill.autoPay ? 'Yes' : 'No'}</p>
+                              </div>
+                              {bill.category && (
+                                <div className="col-span-2">
+                                  <p className="text-slate-500">Category</p>
+                                  <p className="font-medium">{bill.category}</p>
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                          <CardFooter>
+                            <div className="w-full flex justify-between">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  // Mark as paid
+                                  updateRecurringBillMutation.mutate({
+                                    id: bill.id,
+                                    data: {
+                                      ...bill,
+                                      lastPaidDate: new Date().toISOString().split('T')[0],
+                                      nextDueDate: (() => {
+                                        // Calculate next due date based on frequency
+                                        const date = new Date(bill.nextDueDate);
+                                        if (bill.frequency === 'weekly') {
+                                          date.setDate(date.getDate() + 7);
+                                        } else if (bill.frequency === 'monthly') {
+                                          date.setMonth(date.getMonth() + 1);
+                                        } else if (bill.frequency === 'yearly') {
+                                          date.setFullYear(date.getFullYear() + 1);
+                                        }
+                                        return date.toISOString().split('T')[0];
+                                      })()
+                                    }
+                                  });
+                                }}
+                              >
+                                Mark as Paid
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  // Snooze for a week
+                                  updateRecurringBillMutation.mutate({
+                                    id: bill.id,
+                                    data: {
+                                      ...bill,
+                                      nextDueDate: (() => {
+                                        const date = new Date(bill.nextDueDate);
+                                        date.setDate(date.getDate() + 7);
+                                        return date.toISOString().split('T')[0];
+                                      })()
+                                    }
+                                  });
+                                }}
+                              >
+                                Snooze for a Week
+                              </Button>
+                            </div>
+                          </CardFooter>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center text-slate-400 py-6">
+                    <p>No recurring bills added yet.</p>
+                    <p className="text-sm">Add bills below to track your regular expenses</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <Separator />
+            <CardHeader>
+              <CardTitle className="text-lg">Add New Recurring Bill</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleAddRecurringBill} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bill-name">Bill Name</Label>
+                    <Input 
+                      id="bill-name" 
+                      value={newRecurringBill.name} 
+                      onChange={(e) => setNewRecurringBill({
+                        ...newRecurringBill,
+                        name: e.target.value
+                      })}
+                      placeholder="Rent, Utilities, Netflix, etc."
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="bill-amount">Amount</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span className="text-slate-500">$</span>
+                      </div>
+                      <Input 
+                        id="bill-amount"
+                        type="number"
+                        step="0.01"
+                        value={newRecurringBill.amount} 
+                        onChange={(e) => setNewRecurringBill({
+                          ...newRecurringBill,
+                          amount: e.target.value
+                        })}
+                        className="pl-7"
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="bill-frequency">Frequency</Label>
+                    <Select 
+                      value={newRecurringBill.frequency} 
+                      onValueChange={(value) => setNewRecurringBill({
+                        ...newRecurringBill,
+                        frequency: value as any
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="bill-next-due">Next Due Date</Label>
+                    <Input 
+                      id="bill-next-due"
+                      type="date"
+                      value={newRecurringBill.nextDueDate} 
+                      onChange={(e) => setNewRecurringBill({
+                        ...newRecurringBill,
+                        nextDueDate: e.target.value
+                      })}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="bill-category">Category (Optional)</Label>
+                    <Input 
+                      id="bill-category" 
+                      value={newRecurringBill.category} 
+                      onChange={(e) => setNewRecurringBill({
+                        ...newRecurringBill,
+                        category: e.target.value
+                      })}
+                      placeholder="Housing, Utilities, Entertainment, etc."
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="bill-reminder">Reminder Days</Label>
+                    <Input 
+                      id="bill-reminder"
+                      type="number"
+                      min="0"
+                      max="30"
+                      value={newRecurringBill.reminderDays} 
+                      onChange={(e) => setNewRecurringBill({
+                        ...newRecurringBill,
+                        reminderDays: parseInt(e.target.value)
+                      })}
+                      required
+                    />
+                    <p className="text-xs text-slate-500">
+                      Days before due date to show reminder
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="bill-description">Description (Optional)</Label>
+                  <Input 
+                    id="bill-description" 
+                    value={newRecurringBill.description || ''} 
+                    onChange={(e) => setNewRecurringBill({
+                      ...newRecurringBill,
+                      description: e.target.value
+                    })}
+                    placeholder="Any additional details about this bill"
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="bill-autopay"
+                    checked={newRecurringBill.autoPay} 
+                    onCheckedChange={(checked) => setNewRecurringBill({
+                      ...newRecurringBill,
+                      autoPay: checked as boolean
+                    })}
+                  />
+                  <Label htmlFor="bill-autopay" className="text-sm">
+                    This bill is set to auto-pay
+                  </Label>
+                </div>
+                
+                <Button type="submit" className="w-full">
+                  Add Recurring Bill
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </TabsContent>

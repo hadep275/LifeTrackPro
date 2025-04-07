@@ -147,6 +147,16 @@ export const investmentTypeEnum = pgEnum("investment_type", [
   "other"
 ]);
 
+// Recurring Bill Frequency Enum
+export const billFrequencyEnum = pgEnum("bill_frequency", [
+  "weekly",
+  "biweekly",
+  "monthly",
+  "quarterly",
+  "yearly",
+  "custom"
+]);
+
 // Finances Schema
 export const finances = pgTable("finances", {
   id: serial("id").primaryKey(),
@@ -171,6 +181,7 @@ export const financesRelations = relations(finances, ({ one, many }) => ({
   accounts: many(financialAccounts),
   investments: many(investments),
   transactions: many(financialTransactions),
+  recurringBills: many(recurringBills),
 }));
 
 export const insertFinancesSchema = createInsertSchema(finances).omit({ 
@@ -318,6 +329,7 @@ export const financialTransactions = pgTable("financial_transactions", {
   type: text("type").notNull(), // income, expense, transfer
   accountId: integer("account_id").references(() => financialAccounts.id, { onDelete: "set null" }),
   financesId: integer("finances_id").notNull().references(() => finances.id, { onDelete: "cascade" }),
+  recurringBillId: integer("recurring_bill_id"), // Will be set up after recurringBills is defined
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -341,6 +353,52 @@ export const insertTransactionSchema = createInsertSchema(financialTransactions)
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type FinancialTransaction = typeof financialTransactions.$inferSelect;
 
+// Recurring Bills Schema
+export const recurringBills = pgTable("recurring_bills", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  amount: numeric("amount").notNull(),
+  description: text("description"),
+  category: text("category"),
+  frequency: billFrequencyEnum("frequency").notNull().default("monthly"),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date"),
+  dayOfMonth: integer("day_of_month"),  // For monthly bills (1-31)
+  dayOfWeek: integer("day_of_week"),    // For weekly bills (0-6, Sunday to Saturday)
+  recurEveryX: integer("recur_every_x"), // For custom frequency (e.g., every X days)
+  autoPay: boolean("auto_pay").default(false),
+  paymentMethod: text("payment_method"),
+  reminderDays: integer("reminder_days").default(3), // Days before due date to remind
+  color: text("color").default("#3B82F6"),
+  icon: text("icon"),
+  lastPaidDate: text("last_paid_date"),
+  nextDueDate: text("next_due_date").notNull(),
+  accountId: integer("account_id").references(() => financialAccounts.id, { onDelete: "set null" }),
+  financesId: integer("finances_id").notNull().references(() => finances.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const recurringBillsRelations = relations(recurringBills, ({ one, many }) => ({
+  finances: one(finances, {
+    fields: [recurringBills.financesId],
+    references: [finances.id],
+  }),
+  account: one(financialAccounts, {
+    fields: [recurringBills.accountId],
+    references: [financialAccounts.id],
+  }),
+  transactions: many(financialTransactions),
+}));
+
+export const insertRecurringBillSchema = createInsertSchema(recurringBills).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertRecurringBill = z.infer<typeof insertRecurringBillSchema>;
+export type RecurringBill = typeof recurringBills.$inferSelect;
+
 // Extended Finances type with all financial data
 export interface Finances {
   id: number;
@@ -356,6 +414,7 @@ export interface Finances {
   accounts?: FinancialAccount[];
   investments?: Investment[];
   transactions?: FinancialTransaction[];
+  recurringBills?: RecurringBill[];
   createdAt?: Date;
   updatedAt?: Date;
 }
