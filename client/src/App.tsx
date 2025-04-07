@@ -12,6 +12,7 @@ const Tasks = lazy(() => import("@/pages/Tasks"));
 const Habits = lazy(() => import("@/pages/Habits"));
 const Goals = lazy(() => import("@/pages/Goals"));
 const Finances = lazy(() => import("@/pages/Finances"));
+const Calendar = lazy(() => import("@/pages/Calendar"));
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
               <Route path="/habits" component={Habits} />
               <Route path="/goals" component={Goals} />
               <Route path="/finances" component={Finances} />
+              <Route path="/calendar" component={Calendar} />
               <Route component={NotFound} />
             </Switch>
           </Suspense>

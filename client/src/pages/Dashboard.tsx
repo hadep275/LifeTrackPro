@@ -72,7 +72,12 @@ const Dashboard = () => {
         
         {/* Calendar */}
         <div className="md:col-span-2">
-          <CalendarView tasks={tasks} goals={goals} />
+          <CalendarView 
+            tasks={tasks} 
+            goals={goals} 
+            habits={habits}
+            finances={finances}
+          />
         </div>
       </div>
     </div>

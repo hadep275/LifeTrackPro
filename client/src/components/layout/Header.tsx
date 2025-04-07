@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Calendar } from "lucide-react";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 const Header = () => {
@@ -39,6 +39,10 @@ const Header = () => {
             </Link>
             <Link href="/finances" className={`px-3 py-2 font-medium ${isActive("/finances")}`}>
               Finances
+            </Link>
+            <Link href="/calendar" className={`px-3 py-2 font-medium ${isActive("/calendar")}`}>
+              <Calendar className="h-4 w-4 inline mr-1" />
+              Calendar
             </Link>
           </nav>
           <div className="hidden sm:block ml-4">
