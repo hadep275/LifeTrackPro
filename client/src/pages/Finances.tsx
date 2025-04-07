@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Trash2, 
   Plus, 
@@ -1334,10 +1335,10 @@ const Finances = () => {
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="bill-autopay"
-                    checked={newRecurringBill.autoPay} 
+                    checked={newRecurringBill.autoPay || false} 
                     onCheckedChange={(checked) => setNewRecurringBill({
                       ...newRecurringBill,
-                      autoPay: checked as boolean
+                      autoPay: Boolean(checked)
                     })}
                   />
                   <Label htmlFor="bill-autopay" className="text-sm">

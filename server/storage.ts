@@ -235,13 +235,13 @@ export class DatabaseStorage implements IStorage {
         .where(eq(financialTransactions.financesId, financesRecord.id));
     
       // Get associated recurring bills - this might fail if the table doesn't exist yet
-      let recurringBillsList = [];
+      let recurringBillsList: any[] = [];
       try {
-        const recurringBills = await db
+        const recurringBillsData = await db
           .select()
           .from(recurringBills)
           .where(eq(recurringBills.financesId, financesRecord.id));
-        recurringBillsList = recurringBills;
+        recurringBillsList = recurringBillsData;
       } catch (err) {
         console.log("DEBUG: Could not fetch recurring bills, the table might not exist yet:", err);
         // Continue without recurring bills data
@@ -341,7 +341,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(financialTransactions.financesId, id));
       
       // Get associated recurring bills - this might fail if the table doesn't exist yet
-      let recurringBillsList = [];
+      let recurringBillsList: any[] = [];
       try {
         const recurringBillsData = await db
           .select()
@@ -741,14 +741,14 @@ export class DatabaseStorage implements IStorage {
       ));
     
     // Get all investments
-    const investments = await db
+    const investmentsData = await db
       .select()
       .from(investments)
       .where(eq(investments.financesId, financesId));
     
     // Calculate net worth as the sum of all account balances plus investment values
-    const accountsValue = accounts.reduce((sum, account) => sum + Number(account.balance), 0);
-    const investmentsValue = investments.reduce((sum, investment) => sum + Number(investment.value), 0);
+    const accountsValue = accounts.reduce((sum: number, account) => sum + Number(account.balance), 0);
+    const investmentsValue = investmentsData.reduce((sum: number, investment: any) => sum + Number(investment.value), 0);
     
     const netWorth = accountsValue + investmentsValue;
     
