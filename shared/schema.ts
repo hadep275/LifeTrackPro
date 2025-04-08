@@ -342,6 +342,10 @@ export const financialTransactionsRelations = relations(financialTransactions, (
     fields: [financialTransactions.accountId],
     references: [financialAccounts.id],
   }),
+  recurringBill: one(recurringBills, {
+    fields: [financialTransactions.recurringBillId],
+    references: [recurringBills.id],
+  }),
 }));
 
 export const insertTransactionSchema = createInsertSchema(financialTransactions).omit({ 
@@ -359,7 +363,7 @@ export const recurringBills = pgTable("recurring_bills", {
   amount: numeric("amount").notNull(),
   description: text("description"),
   category: text("category"),
-  frequency: billFrequencyEnum("frequency").notNull().default("monthly"),
+  frequency: text("frequency").notNull().default("monthly"), // Changed from enum to text
   startDate: text("start_date").notNull(),
   endDate: text("end_date"),
   dayOfMonth: integer("day_of_month"),  // For monthly bills (1-31)

@@ -1,43 +1,87 @@
-import { useEffect } from "react";
 import { useLocation } from "wouter";
 import TaskSummary from "@/components/dashboard/TaskSummary";
 import HabitSummary from "@/components/dashboard/HabitSummary";
 import GoalSummary from "@/components/dashboard/GoalSummary";
 import FinanceSummary from "@/components/dashboard/FinanceSummary";
 import CalendarView from "@/components/dashboard/CalendarView";
-import useLocalStorage from "@/hooks/useLocalStorage";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Task, Habit, Goal, Finances } from "@shared/schema";
+import { Loader2 } from "lucide-react";
 
 const Dashboard = () => {
   const [, setLocation] = useLocation();
-  const [tasks, setTasks] = useLocalStorage<Task[]>("tasks", []);
-  const [habits] = useLocalStorage<Habit[]>("habits", []);
-  const [goals] = useLocalStorage<Goal[]>("goals", []);
-  const [finances] = useLocalStorage<Finances>("finances", {
-    id: 1,
-    income: 0,
-    expenses: 0,
-    expenseCategories: []
+  
+  // Fetch data from API instead of localStorage
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ['/api/tasks'],
+    queryFn: async () => {
+      return await apiRequest<Task[]>('/api/tasks');
+    }
+  });
+  
+  const { data: habits = [], isLoading: habitsLoading } = useQuery({
+    queryKey: ['/api/habits'],
+    queryFn: async () => {
+      return await apiRequest<Habit[]>('/api/habits');
+    }
+  });
+  
+  const { data: goals = [], isLoading: goalsLoading } = useQuery({
+    queryKey: ['/api/goals'],
+    queryFn: async () => {
+      return await apiRequest<Goal[]>('/api/goals');
+    }
+  });
+  
+  const { data: finances, isLoading: financesLoading } = useQuery({
+    queryKey: ['/api/finances'],
+    queryFn: async () => {
+      return await apiRequest<Finances>('/api/finances');
+    }
+  });
+  
+  const toggleTaskMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+      
+      return await apiRequest<Task>(`/api/tasks/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ ...task, completed })
+      });
+    }
   });
 
-  // Initialize finances if not already set
-  useEffect(() => {
-    if (!localStorage.getItem('finances')) {
-      localStorage.setItem('finances', JSON.stringify({
-        id: 1,
-        income: 0,
-        expenses: 0,
-        expenseCategories: []
-      }));
-    }
-  }, []);
-
   const handleToggleTask = (taskId: number, completed: boolean) => {
-    setTasks(
-      tasks.map(task => 
-        task.id === taskId ? { ...task, completed } : task
-      )
+    toggleTaskMutation.mutate({ id: taskId, completed });
+  };
+
+  // Loading indicator when any data is loading
+  const isLoading = tasksLoading || habitsLoading || goalsLoading || financesLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Loading your dashboard...</p>
+      </div>
     );
+  }
+
+  // Default finances data fallback
+  const financesData = finances || {
+    id: 0,
+    income: "0",
+    expenses: "0",
+    savings: "0",
+    netWorth: "0",
+    userId: 1, // Add required userId field
+    expenseCategories: [],
+    financialGoals: [],
+    accounts: [],
+    investments: [],
+    recurringBills: []
   };
 
   return (
@@ -66,7 +110,7 @@ const Dashboard = () => {
         
         {/* Financial Summary */}
         <FinanceSummary 
-          finances={finances}
+          finances={financesData}
           onViewAll={() => setLocation("/finances")}
         />
         
@@ -76,7 +120,7 @@ const Dashboard = () => {
             tasks={tasks} 
             goals={goals} 
             habits={habits}
-            finances={finances}
+            finances={financesData}
           />
         </div>
       </div>
