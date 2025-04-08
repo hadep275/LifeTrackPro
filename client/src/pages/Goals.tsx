@@ -261,7 +261,13 @@ const Goals = () => {
   };
   
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === "financialGoalId") {
+      // Convert to number or null based on the value
+      const financialGoalId = value === "none" ? undefined : parseInt(value);
+      setFormData(prev => ({ ...prev, [name]: financialGoalId }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
   
   const resetForm = () => {
@@ -597,14 +603,14 @@ const Goals = () => {
             <div className="space-y-2">
               <Label htmlFor="financialGoalId">Link to Financial Goal (Optional)</Label>
               <Select 
-                value={formData.financialGoalId?.toString() || ""}
+                value={formData.financialGoalId?.toString() || "none"}
                 onValueChange={(value) => handleSelectChange("financialGoalId", value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a financial goal" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {financialGoals.map((goal: any) => (
                     <SelectItem key={goal.id} value={goal.id.toString()}>
                       {goal.name} (${parseFloat(goal.targetAmount.toString()).toLocaleString()})
